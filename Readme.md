@@ -5,7 +5,7 @@ Our suggest solution was to provide a single application that provided the best 
 
 ## Team Members
 - Jamie Aronson 
-- Snehin Kukreja
+- [Snehin Kukreja](https://github.com/itssnehin)
 - Matthew Lock 
 - Bertha Mafunu
 - Obusitse Mogwera
