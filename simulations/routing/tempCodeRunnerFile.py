@@ -1,1 +1,0 @@
- time_seconds= directions_result[0]['legs'][0]['duration']['value']

@@ -25,17 +25,13 @@ address = results[0]['formatted_address']
 print("Your current location is {} {} with an accuracy of {}m.".format(lateral,longitudinal,accuracy))
 print("Your current location is {} with an accuracy of {}m.".format(address,accuracy))
 
-# Get directions
-# now = datetime.now()
-# directions_result = gmaps.directions(location,"Checkers, Plumstead", mode="driving",departure_time=now)
-
-# Routing Algorithm
+# Routing Location Information
 locations=[]
 
 # Get locations from user
 input_string=str(raw_input("\nEnter delivery locations or type 'done':\n")).rstrip()
 while input_string!="done":
-    locations.append(input_string)
+    if input_string: locations.append(input_string)
     input_string=str(raw_input("\nEnter delivery locations or type 'done':\n")).rstrip()
 
 # All possible combinations of locations
@@ -49,36 +45,49 @@ now = datetime.now()
 if len(locations_combinations)>0:
 
     end_location = locations_combinations[0][0]
-    waypoints= locations_combinations[0][1:]
+    waypoints_order= locations_combinations[0][1::]
+    waypoints_parameter=[]
+    
+    for i, values in enumerate(waypoints_order):
+        waypoints_parameter.append(values)
 
-    directions_result = gmaps.directions(current_location,end_location, mode="driving",departure_time=now)
-    best_time_seconds= directions_result[0]['legs'][0]['duration']['value']
-    best_time_text= directions_result[0]['legs'][0]['duration']['text']
+    directions_result = gmaps.directions(current_location,end_location,waypoints=waypoints_parameter, mode="driving",departure_time=now)
+    legs=directions_result[0]['legs']
+
+    best_time_seconds=0
+    for i, value in enumerate(legs):
+        best_time_seconds+= value['duration']['value']
     best_time_index =0
 
-    json_formatted_str = json.dumps(best_time_seconds, indent=2)
-    print("Time from {} to {} with waypoints {} is {} seconds.".format(address,end_location,waypoints,best_time_seconds))
-    # print(best_time)
+    print("Time from {} to {} with waypoints {} is {} seconds.".format(address,end_location,waypoints_order,best_time_seconds))
+
 
     for i,list_of_locations in enumerate(locations_combinations,start=1):
         if i>len(locations_combinations)-1: break
 
         end_location = locations_combinations[i][0]
-        waypoints= locations_combinations[i][1:]
+        waypoints_order= locations_combinations[i][1::]
+        waypoints_parameter=[]
 
-        directions_result = gmaps.directions(current_location,end_location, mode="driving",departure_time=now)
-        time_seconds= directions_result[0]['legs'][0]['duration']['value']
-        time_text= directions_result[0]['legs'][0]['duration']['text']
-        print("Time from {} to {} with waypoints {} is {} seconds.".format(address,end_location,waypoints,time_seconds))
+        for i, values in enumerate(waypoints_order):
+            waypoints_parameter.append(values)    
+
+        directions_result = gmaps.directions(current_location,end_location,waypoints=waypoints_parameter, mode="driving",departure_time=now)
+        legs=directions_result[0]['legs']
+        time_seconds=0
+        for i, value in enumerate(legs):
+            time_seconds+= value['duration']['value']
+
+        print("Time from {} to {} with waypoints {} is {} seconds.".format(address,end_location,waypoints_order,time_seconds))
 
         if time_seconds<best_time_seconds:
             best_time_seconds=time_seconds
             best_time_index=i
 
     best_end_location= locations_combinations[best_time_index][0]
-    best_waypoints= locations_combinations[best_time_index][1:]
+    best_waypoints= locations_combinations[best_time_index][1::]
     print("\nThe best route to take is from {} to {} with waypoints {}, taking {} seconds.\n".format(address,best_end_location,best_waypoints,best_time_seconds))
 
-    directions_result = gmaps.directions(current_location,end_location, mode="driving",departure_time=now)
-    json_formatted_str = json.dumps(directions_result, indent=2)
-    print(json_formatted_str)
+    # directions_result = gmaps.directions(current_location,end_location,mode="driving",departure_time=now)
+    # json_formatted_str = json.dumps(directions_result, indent=2)
+    # print(json_formatted_str)
