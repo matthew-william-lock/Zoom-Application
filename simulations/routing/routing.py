@@ -88,6 +88,6 @@ if len(locations_combinations)>0:
     best_waypoints= locations_combinations[best_time_index][1::]
     print("\nThe best route to take is from {} to {} with waypoints {}, taking {} seconds.\n".format(address,best_end_location,best_waypoints,best_time_seconds))
 
-    # directions_result = gmaps.directions(current_location,end_location,mode="driving",departure_time=now)
-    # json_formatted_str = json.dumps(directions_result, indent=2)
-    # print(json_formatted_str)
+    directions_result = gmaps.directions(current_location,end_location,mode="driving",departure_time=now)
+    json_formatted_str = json.dumps(directions_result, indent=2)
+    print(json_formatted_str)
