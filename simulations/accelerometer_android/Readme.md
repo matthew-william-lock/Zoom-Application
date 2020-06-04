@@ -19,4 +19,4 @@ dependencies {
 ## The Application
 A screenshot of the application in action is shown below, showing a rotation of the user's device along the  3 major axes.
 
-<a name="screenshot">![images/screenshot.png](images/screenshot.png=250x)
+<a name="screenshot">![images/screenshot.png](images/screenshot.png=150x)
