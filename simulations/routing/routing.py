@@ -34,60 +34,36 @@ while input_string!="done":
     if input_string: locations.append(input_string)
     input_string=str(raw_input("\nEnter delivery locations or type 'done':\n")).rstrip()
 
-# All possible combinations of locations
-locations_combinations=[]
-for x in itertools.permutations(locations):
-    locations_combinations.append(x)
-print("\nNumber of different combinations {}\n".format(len(locations_combinations)))
-
-# Pick the best route
 now = datetime.now()
-if len(locations_combinations)>0:
 
-    end_location = locations_combinations[0][0]
-    waypoints_order= locations_combinations[0][1::]
-    waypoints_parameter=[]
-    
-    for i, values in enumerate(waypoints_order):
-        waypoints_parameter.append(values)
+# Fastest time
+best_time_seconds=float("inf")
+best_route_index=0
 
-    directions_result = gmaps.directions(current_location,end_location,waypoints=waypoints_parameter, mode="driving",departure_time=now)
+# select best route
+for i in range(len(locations)):
+    end_location=locations[i]
+    waypoints=locations[:i]
+    waypoints.extend(locations[i+1:])
+
+    # API Request
+    directions_result = gmaps.directions(current_location,end_location,waypoints=waypoints,optimize_waypoints =True, mode="driving",departure_time=now)
     legs=directions_result[0]['legs']
 
-    best_time_seconds=0
+    # Get time for route
+    time_seconds=0
     for i, value in enumerate(legs):
-        best_time_seconds+= value['duration']['value']
-    best_time_index =0
+        time_seconds+= value['duration']['value']
+    
+    if time_seconds<best_time_seconds:
+        best_time_seconds=time_seconds
+        best_route_index=i
 
-    print("Time from {} to {} with waypoints {} is {} seconds.".format(address,end_location,waypoints_order,best_time_seconds))
+    # Print route results
+    print("Time from {} to {} with waypoints (out of order) {} is {} seconds.".format(address,end_location,waypoints,time_seconds))
 
-
-    for i,list_of_locations in enumerate(locations_combinations,start=1):
-        if i>len(locations_combinations)-1: break
-
-        end_location = locations_combinations[i][0]
-        waypoints_order= locations_combinations[i][1::]
-        waypoints_parameter=[]
-
-        for i, values in enumerate(waypoints_order):
-            waypoints_parameter.append(values)    
-
-        directions_result = gmaps.directions(current_location,end_location,waypoints=waypoints_parameter, mode="driving",departure_time=now)
-        legs=directions_result[0]['legs']
-        time_seconds=0
-        for i, value in enumerate(legs):
-            time_seconds+= value['duration']['value']
-
-        print("Time from {} to {} with waypoints {} is {} seconds.".format(address,end_location,waypoints_order,time_seconds))
-
-        if time_seconds<best_time_seconds:
-            best_time_seconds=time_seconds
-            best_time_index=i
-
-    best_end_location= locations_combinations[best_time_index][0]
-    best_waypoints= locations_combinations[best_time_index][1::]
-    print("\nThe best route to take is from {} to {} with waypoints {}, taking {} seconds.\n".format(address,best_end_location,best_waypoints,best_time_seconds))
-
-    directions_result = gmaps.directions(current_location,end_location,mode="driving",departure_time=now)
-    json_formatted_str = json.dumps(directions_result, indent=2)
-    print(json_formatted_str)
+# Print best route
+best_end_location= locations[best_route_index]
+best_waypoints= locations[:best_route_index]
+best_waypoints.extend(locations[i+best_route_index:])
+print("\nThe best route to take is from {} to {} with waypoints {}, taking {} seconds.\n".format(address,best_end_location,best_waypoints,best_time_seconds))
