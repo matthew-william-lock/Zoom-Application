@@ -1,11 +1,15 @@
 package com.example.accelerometersimulation;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -15,9 +19,12 @@ import com.jjoe64.graphview.LegendRenderer;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 
+import android.os.Environment;
 import android.provider.ContactsContract;
 import android.view.View;
 import android.view.Menu;
@@ -26,6 +33,10 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
@@ -39,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     TextView tv_acc_y_max;
     TextView tv_acc_z_max;
     Button bt_acc;
+    Button vt_save;
 
     // Max acc values
     private float max_acc_x=0;
@@ -59,6 +71,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private ArrayList<DataPoint> accelZList = new ArrayList<DataPoint>();
 
     private Boolean acc = true;
+
+    private Context mContext=MainActivity.this;
+    private static final int REQUEST = 112;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         tv_acc_y_max=findViewById(R.id.tv_acc_y_max);
         tv_acc_z_max=findViewById(R.id.tv_acc_z_max);
         bt_acc = findViewById(R.id.bt_acc);
+        vt_save = findViewById(R.id.bt_save);
 
         bt_acc.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -137,6 +153,78 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         series_x.setColor(Color.RED);
         series_y.setColor(Color.GREEN);
         series_z.setColor(Color.BLUE);
+
+        // Check permissions
+        if (Build.VERSION.SDK_INT >= 23) {
+            String[] PERMISSIONS = {android.Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
+            if (!hasPermissions(mContext, PERMISSIONS)) {
+                ActivityCompat.requestPermissions((Activity) mContext, PERMISSIONS, REQUEST);
+            }
+        }
+
+        vt_save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                // Save data
+//                String pa = Environment.getExternalStorageDirectory().getAbsolutePath()+"/acc_data";
+                final File path = MainActivity.this.getExternalFilesDir("");
+//                // Make sure path exists
+                if (!path.exists()) path.mkdir();
+                File file = new File(path,"data.txt");
+                // Save data to file
+                FileInputStream fileInputStream;
+                try {
+
+                    file.createNewFile();
+                    FileOutputStream fOut = new FileOutputStream(file);
+                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fOut);
+
+                    if(accelXList.size()<MAX_DATA_POINTS || accelYList.size()<MAX_DATA_POINTS || accelZList.size()<MAX_DATA_POINTS) {
+                        Exception exception = new Exception("Not enough data recorded.");
+                        throw exception;
+                    }
+
+                    // X_acceleration Data
+                    outputStreamWriter.append("x_data=[");
+                    for (int i =0; i<MAX_DATA_POINTS; i++){
+                        int index = accelXList.size()-1 - MAX_DATA_POINTS + i;
+                        outputStreamWriter.append(accelXList.get(index).getY()+"");
+                        if (i!=MAX_DATA_POINTS-1) outputStreamWriter.append(",");
+                    }
+                    outputStreamWriter.append("]\n");
+
+                    // Y_acceleration Data
+                    outputStreamWriter.append("y_data=[");
+                    for (int i =0; i<MAX_DATA_POINTS; i++){
+                        int index = accelYList.size()-1 - MAX_DATA_POINTS + i;
+                        outputStreamWriter.append(accelYList.get(index).getY()+"");
+                        if (i!=MAX_DATA_POINTS-1) outputStreamWriter.append(",");
+                    }
+                    outputStreamWriter.append("]\n");
+
+                    // Z_acceleration Data
+                    outputStreamWriter.append("z_data=[");
+                    for (int i =0; i<MAX_DATA_POINTS; i++){
+                        int index = accelZList.size()-1 - MAX_DATA_POINTS + i;
+                        outputStreamWriter.append(accelZList.get(index).getY()+"");
+                        if (i!=MAX_DATA_POINTS-1) outputStreamWriter.append(",");
+                    }
+                    outputStreamWriter.append("]\n");
+
+                    outputStreamWriter.close();
+                    fOut.flush();;
+                    fOut.close();
+
+                    Toast.makeText(MainActivity.this, path.toString(), Toast.LENGTH_LONG).show();
+
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+
+
+            }
+        });
 
         // Set series animated props
 //        series_x.setAnimated(true);
@@ -226,4 +314,31 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
+
+    private static boolean hasPermissions(Context context, String... permissions) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case REQUEST: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //do here
+                } else {
+                    Toast.makeText(mContext, "The app was not allowed to write in your storage", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+
+
 }

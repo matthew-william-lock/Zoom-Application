@@ -16,6 +16,15 @@ dependencies {
 }
 ```
 
+## App Permissions (In Manifest)
+```
+...
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+...
+```
+
+
+
 ## The Application
 A screenshot of the application in action is shown below, showing a rotation of the user's device along the  3 major axes.
 
